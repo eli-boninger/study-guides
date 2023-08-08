@@ -11,11 +11,11 @@
 
 ### Common interview questions
 
-1. Can browsers read JSX directly?
+#### 1. Can browsers read JSX directly?
 
 Nope, needs transpiliation, via babel or otherwise
 
-2. What is the virtual DOM?
+#### 2. What is the virtual DOM?
 
 Lightweight representation of the DOM which React stores in memory and syncs with the real DOM via a library such as ReactDOM.
 
@@ -23,29 +23,29 @@ For very DOM object there is a corresponding virtual DOM object with the same pr
 
 React uses two virtual DOMs to render the UI, one representing current state and one representing previous state. When state changes, React compares the two and only updates the elements with changes.
 
-3. Why use React?
+#### 3. Why use React?
 
 Simpler structure with reusable components. Performant due to the many optimizations with the virtual DOM. Easy to debug due to the unidirectional data flow. Good debugging tools.
 
-4. What is an event in React?
+#### 4. What is an event in React?
 
 Key press, mouse click, etc. In React you pass a function as the event handler, as in `<Button onClick={handleClick}>`.
 
-5. What is a synthetic event in React?
+#### 5. What is a synthetic event in React?
 
 Combination of various browsers' native events in a single API to keep event responses consistent across browsers. Ex: `preventDefault()`
 
-6. Why are `key`s required in React lists?
+#### 6. Why are `key`s required in React lists?
 
 Allows react to keep track of changes, updates, and deletions for particular list items to avoid unnecessary rerenders. Without these, React doesn't understand the order or uniqueness of each element.
 
-7. What are the differences between `state` and `props` and how they are used?
+#### 7. What are the differences between `state` and `props` and how they are used?
 
 State is internal to a component. For example a checkbox component might use state to keep track of whether it is checked or unchecked. No other components access this state directly. Props are passed between components. If another component needs to know about the checked state, this can be passed to the checkbox's children via props.
 
 Props are readonly and immutable. State is meant to be updated.
 
-8. What is the difference between controlled and uncontrolled components?
+#### 8. What is the difference between controlled and uncontrolled components?
 
 In a controlled component, the value is controlld by React. For example, a state value to represent input is updated each time the user enters text in the field.
 

@@ -71,7 +71,7 @@ const MyInput = () => {
 }
 ```
 
-8. How do you clean up a `useEffect`?
+#### 9. How do you clean up a `useEffect`?
 
 Not always necessary, but will be required if the component does something such as polling:
 

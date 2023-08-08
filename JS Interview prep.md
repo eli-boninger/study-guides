@@ -428,5 +428,3 @@ localStorage.removeItem('key')
 // Same for sessionStorage
 
 ```
-
-2:57:11

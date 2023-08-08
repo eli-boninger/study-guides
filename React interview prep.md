@@ -7,6 +7,7 @@
 3. Virtual DOM - lightweight representation of the real DOM in memory. When the state of an object changes, the virtual DOM changes only that object in the real DOM, rather than updating all the objects
 4. One-way data binding - Unidirectional data flow with nesting components
 5. Performance - Updates only components that have changed, rather than all components.
+6. Supports SSR - this boosts SEO of an app
 
 ### Common interview questions
 
@@ -27,3 +28,15 @@ Simpler structure with reusable components. Performant due to the many optimizat
 Key press, mouse click, etc. In React you pass a function as the event handler, as in `<Button onClick={handleClick}>`.
 
 5. What is a synthetic event in React?
+
+Combination of various browsers' native events in a single API to keep event responses consistent across browsers. Ex: `preventDefault()`
+
+6. Why are `key`s required in React lists?
+
+Allows react to keep track of changes, updates, and deletions for particular list items to avoid unnecessary rerenders.
+
+7. What are the differences between `state` and `props` and how they are used?
+
+State is internal to a component. For example a checkbox component might use state to keep track of whether it is checked or unchecked. No other components access this state directly. Props are passed between components. If another component needs to know about the checked state, this can be passed to the checkbox's children via props.
+
+Props are readonly and should not be mutated. State is meant to be updated.

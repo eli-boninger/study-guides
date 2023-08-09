@@ -84,5 +84,23 @@ const PollingComponent = (props) => {
         return () => clearInterval(interval)
     }, [])
 
+    ...
 }
 ```
+
+#### 10. When is it appropriate to use refs?
+
+- Managing focus, media playback, text selection
+- Integrating with third-party DOM libraries
+- Triggering imperative animations
+
+#### 11. When do rerenders occur, and how can unnecessary rerenders be avoid?
+
+Rerenders occur when props or state of component have changed. Rerendering components that haven't actually been updated should be avoided. We can avoid unnecessary rerenders by:
+
+- using the dependency array in `useEffect`` properly such that it is run as little as possible
+- have components do one thing, keep updates as far down in the DOM tree as possible (i.e. some universal state passed down in props to every component is bad)
+
+#### 12. What are some ways to optimize React component performance
+
+- `useMemo`

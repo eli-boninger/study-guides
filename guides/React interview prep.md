@@ -38,7 +38,37 @@ React's StrictMode calls all component functions twice to check for purity.
 
 Event handlers don't need to be pure because they are not run during rendering.
 
+#### Adding interactivity
+
+Event handlers should start with `handle` (according to convention in the React docs). In particular, if the event is `onEventName` then the handle should be named `handleEventName`.
+
+Events bubble up. If a div contains a button, both of which have an `onClick` handler, then pressing that button would trigger both, from child to parent. This is true for all events except `onScroll`. To prevent this, the child can call `e.stopPropagation()`.
+
+Adding `Capture` to the end of an event (e.g. `onClickCapture`) will catch events on all children, even if they stopped propagation. This is good for analytics.
+
+##### Triggering a render
+
+Two reasons to render:
+
+- It is my initial render (this is done via `createRoot`)
+- My or my ancestors' state has changed (re-render)
+
+Re-renders will happen recursively, traversing all nested components within the component that triggered the re-render
+
+On first commit to the DOM, React uses the DOM `appendChild()` method. Subsequently, React makes only the necessary DOM changes. React only changes the DOM if there is a difference between renders.
+
+---
+
+React waits until all code in event handlers is complete before processing state updates (batching).
+
 #### Hooks
+
+Hooks are special functions that are only available while React is rendering.
+
+Rules of hooks:
+
+1. Only callable at top level
+2. No calling within loops or conditionals
 
 ##### useState
 

@@ -61,6 +61,225 @@ On first commit to the DOM, React uses the DOM `appendChild()` method. Subsequen
 
 React waits until all code in event handlers is complete before processing state updates (batching).
 
+#### Managing State
+
+Rules for structuring component state:
+
+1. Group related state - if two pieces of state are always updated at the same time, consider combining them into a single state variable
+2. Avoid contradictions in state - if pieces of state disagree, this has the potential to cause problems. For example, consider an `isSent` variable and an `isSending` variable. These are inextricably linked and could end up in an impossible scenario in which both are set to `true` if a developer forgets to alter one when change the other. Consider instead a `status` variable with possible values of `'typing'`, `'sending'`, and `'sent'`
+3. Avoid redundancy or duplication
+4. Avoid deeply nested state
+
+When a component unmounts, its state is completely destroyed. However, from React's perspective, if a component is removed from the virtual DOM and replaced by the same component in the same position, state is not destroyed because these two are virtually the same. To avoid this, reset component state with different `key` to help React distinguish between the two components.
+
+##### Using reducers
+
+This is a pretty similar concept to [Redux](Redux%20interview%20prep.md). Here is a sample reducer:
+
+```
+function tasksReducer(tasks, action) {
+  switch (action.type) {
+    case 'added': {
+      return [
+        ...tasks,
+        {
+          id: action.id,
+          text: action.text,
+          done: false,
+        },
+      ];
+    }
+    case 'changed': {
+      return tasks.map((t) => {
+        if (t.id === action.task.id) {
+          return action.task;
+        } else {
+          return t;
+        }
+      });
+    }
+    case 'deleted': {
+      return tasks.filter((t) => t.id !== action.id);
+    }
+    default: {
+      throw Error('Unknown action: ' + action.type);
+    }
+  }
+}
+```
+
+Then, to use the above reducer:
+
+```
+import { useReducer } from 'react';
+...
+const [tasks, dispatch] = useReducer(tasksReducer, initialTasks)
+// first arg is the reducer
+// second arg is the initial state
+```
+
+Now I can dispatch action in the component:
+
+```
+function handleAddTasks(text) {
+  dispatch({
+    type: 'added',
+    id: nextId++,
+    text: text
+  });
+}
+```
+
+Though, unlike a redux store, this is component-specific, it does allow us to separate concerns by having event handlers only dispatch actions and leaving the state management to be contained within the reducer.
+
+Like in Redux, reducers must be pure and an action must describe a single user interaction, even if that action leads to multiple changes in the data.
+
+##### Context
+
+Context lets a parent component provide data to the entire tree below it. Three main parts to using context:
+
+1. Creating the context
+2. Using the context from the component that requires the data
+3. Provide the context from the component that specifies the data
+
+Creating a context:
+
+```
+import { createContext } from 'react';
+
+export const LevelContext = createContext(1); // 1 is the initial value. objects are okay
+```
+
+Using that context:
+
+```
+import { useContext } from 'react';
+import { LevelContext } from './LevelContext.js';
+...
+const level = useContext(LevelContext);
+```
+
+Providing the context:
+
+```
+import { LevelContext } from './LevelContext.js';
+...
+<LevelContext.Provider value={9}> // value be variable here, maybe a prop on the providing component
+  {children}
+</LevelContext.Provider>
+```
+
+Now, if any component inside the providing component asks for `LevelContext`, they will get the value `9` for `level`. React will use the nearest providing ancestor of the child which asked for the context.
+
+Context lets you write components that "adapt to thei surroundings" and display themselves differently depending on where they are being rendered.
+
+Alternatives to consider before using context:
+
+1. Start by passing props. Passing a doezen props down through a doesn't components isn't unusual. This is very clear to other developer building on your code.
+2. Extract components and pass JSX as children to them. Rather than rendering some `<Layout posts={posts}>` where `Layout` doesn't actually use that prop or need to know about it, do this instead: `<Layout><Posts posts={posts} /></Layout`.
+
+Use cases for context:
+
+- Theming
+- Current account (logged-in user)
+- Routing (need the context that is the current route)
+- Managing state. As apps grow, universal (or nearly universal) state data increases. It is not uncommon to combine context with a reducer to manage this state.
+
+Here is an example of combining a context with a reducer (building on reducer example from above):
+
+```
+// <TasksContext.js>
+import { createContext } from 'react';
+
+// one context for the tasks, and one that provides the dispatch function
+export const TasksContext = createContext(null);
+export const TasksDispatchContext = createContext(null);
+
+
+// in the top level component, provide the two contexts
+// <TaskApp.js>
+...
+const [tasks, dispatch] = useReducer(tasksReducer, initialTasks);
+...
+return (
+  <TasksContext.Provider value={tasks}>
+    <TasksDispatchContext.Provider value={dispatch}>
+
+// now any component that needs to read from tasks can ask for that context, as well as for tasks dispatcher as needed
+...
+const tasks = useContext(TasksContext);
+const dispatch = useContext(TasksDispatchContext);
+```
+
+We can take this a step further by putting all possible logic into `TasksContext.js`:
+
+```
+import { createContext, useReducer } from 'react';
+
+export const TasksContext = createContext(null);
+export const TasksDispatchContext = createContext(null);
+
+export function TasksProvider({ children }) {
+  const [tasks, dispatch] = useReducer(
+    tasksReducer,
+    initialTasks
+  );
+
+  return (
+    <TasksContext.Provider value={tasks}>
+      <TasksDispatchContext.Provider value={dispatch}>
+        {children}
+      </TasksDispatchContext.Provider>
+    </TasksContext.Provider>
+  );
+}
+
+function tasksReducer(tasks, action) {
+  switch (action.type) {
+    case 'added': {
+      return [...tasks, {
+        id: action.id,
+        text: action.text,
+        done: false
+      }];
+    }
+    case 'changed': {
+      return tasks.map(t => {
+        if (t.id === action.task.id) {
+          return action.task;
+        } else {
+          return t;
+        }
+      });
+    }
+    case 'deleted': {
+      return tasks.filter(t => t.id !== action.id);
+    }
+    default: {
+      throw Error('Unknown action: ' + action.type);
+    }
+  }
+}
+
+const initialTasks = [
+  { id: 0, text: 'Philosopher’s Path', done: true },
+  { id: 1, text: 'Visit the temple', done: false },
+  { id: 2, text: 'Drink matcha', done: false }
+];
+```
+
+You could further define custom hooks to get each context:
+
+```
+export function useTasks() {
+  return useContext(TasksContext);
+}
+
+export function useTasksDispatch() {
+  return useContext(TasksDispatchContext);
+}
+```
+
 #### Hooks
 
 Hooks are special functions that are only available while React is rendering.

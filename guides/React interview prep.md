@@ -280,6 +280,105 @@ export function useTasksDispatch() {
 }
 ```
 
+#### Escape hatches
+
+##### Refs
+
+When you want a component to “remember” some information, but you don’t want that information to trigger new renders, you can use a ref. This would allow me to remember value 0: `const ref = useRef(0);` and would return an object like
+
+```
+{
+  current: 0
+}
+```
+
+This `ref.current` value is mutable and could point to anything. Changing a ref's current value does not trigger a re-render.
+
+When a piece of information is used for rendering, keep it in state. When a piece of information is only needed by event handlers and changing it doesn’t require a re-render, using a ref may be more efficient. You should not read or write to the ref during rendering.
+
+When to use refs:
+
+- Storing timeout IDs
+- Storing and manipulating DOM elements
+
+Attaching a ref to a DOM node:
+
+```
+const ref = useRef(null);
+...
+return (
+  <div ref={ref}>
+  ...
+)
+```
+
+Focusing an input:
+
+```
+import { useRef } from 'react';
+
+export default function Form() {
+  const inputRef = useRef(null);
+
+  function handleClick() {
+    inputRef.current.focus();
+  }
+
+  return (
+    <>
+      <input ref={inputRef} />
+      <button onClick={handleClick}>
+        Focus the input
+      </button>
+    </>
+  );
+}
+```
+
+To maintain an indeterminate list of refs, you can store a map in the ref. You can't call `useRef` inside of a `map` for the same reason you must call all hooks at top level.
+
+In order to have your own component expose a ref, `forwardRef()` must be used, a la:
+
+```
+const MyInput = forwardRef((props, ref) => {
+  return <input {...props} ref={ref} />;
+});
+```
+
+This is common in design systems.
+
+DOM node refs are set during the commit to DOM phase. Usually, you will access refs from event handlers. If you want to do something with a ref, but there is no particular event to do it in, you might need an Effect hook.
+
+###### flushSync
+
+You can force React to update the DOM synchronously. This should be used sparingly but can helpful for something such as scrolling to a newly added element in a list. If I have code that looks like this:
+
+```
+setTodos([ ...todos, newTodo]);
+listRef.current.lastChild.scrollIntoView();
+```
+
+I will end up scrolling to the second-last todo because the new one has not yet been commit to the DOM when I retrieve the `lastChild` of the `listRef.`
+
+To fix this, I can use `flushSync` to tell React to update the DOM right after executing a certain block of code.
+
+```
+flushSync(() => {
+  setTodos([ ...todos, newTodo]);
+});
+listRef.current.lastChild.scrollIntoView();
+```
+
+---
+
+Common use cases for DOM manipulation with refs:
+
+- Managing focus
+- Scrolling to an element
+- calling browser APIs not exposed by React
+
+Stick to non-destructive actions like focusing and scrolling.
+
 #### Hooks
 
 Hooks are special functions that are only available while React is rendering.
@@ -381,7 +480,134 @@ export default function CountLabel({ count }) {
 
 A `set` function called in render must be behind a conditional to avoid an infinite loop. This type of logic can only update the state of the current component.
 
-##### useCallback
+##### useEffect and Effects
+
+Effects let you specify side effects that are caused by rendering itself, rather than by a particular event. Effects run at the end of a commit to DOM.
+
+If your code needs to synchronize with some external system, this is a good time for an Effect. If your effect only adjusts some state based on other state, you might not need an Effect.
+
+When you don't need effects:
+
+- to transform data for rendering. If you need to filter a list when it changes, whether that list is in state or props, that code can live at top level because it will get called each time the component re-renders (which will happen any time the props or state change)
+- handling user events. this should be self-explanatory. That's what event handlers are for.
+
+Consider this code:
+
+```
+function Form() {
+  const [firstName, setFirstName] = useState('Taylor');
+  const [lastName, setLastName] = useState('Swift');
+
+  const [fullName, setFullName] = useState('');
+  useEffect(() => {
+    setFullName(firstName + ' ' + lastName);
+  }, [firstName, lastName]);
+  // ...
+}
+```
+
+Because the effect hook updates state based on a state change, that automatically means were doing to full render passes every time either `firstName` or `lastName` changes. We can instead do:
+
+```
+function Form() {
+  const [firstName, setFirstName] = useState('Taylor');
+  const [lastName, setLastName] = useState('Swift');
+  const fullName = firstName + ' ' + lastName;
+  // ...
+}
+```
+
+When you’re not sure whether some code should be in an Effect or in an event handler, ask yourself why this code needs to run. Use Effects only for code that should run because the component was displayed to the user.
+
+For running an effect that only occurs when the app loads, a barebones effect risks being run twice in development:
+
+```
+function App() {
+  useEffect(() => {
+    loadDataFromLocalStorage();
+    checkAuthToken();
+  }, []);
+  // ...
+}
+```
+
+Components should be resilient to remounting. Use a top-level variable:
+
+```
+let didInit = false;
+
+function App() {
+  useEffect(() => {
+    if (!didInit) {
+      didInit = true;
+      // ✅ Only runs once per app load
+      loadDataFromLocalStorage();
+      checkAuthToken();
+    }
+  }, []);
+  // ...
+}
+```
+
+Or before the App renders at all:
+
+```
+if (typeof window !== 'undefined') { // Check if we're running in the browser.
+   // ✅ Only runs once per app load
+  checkAuthToken();
+  loadDataFromLocalStorage();
+}
+
+function App() {
+  // ...
+}
+```
+
+When using an Effect to subscribe to an external store, consider using the `useSyncExternalStore` hook instead.
+
+---
+
+When the `useEffect` dependency array arg is omitted, it will run every render. This could be used to delay a piece of code running until the render is reflected on the screen. Comparison in the dependency array is done with `Object.is`. You can omit something from the dependency array if it has a _stable identity_, such as a ref, a set function returned from `useState`.
+
+A cleanup function for `useEffect` will run each time before the effect runs again.
+
+If your Effect fetches something, the cleanup function should either abort the fetch or ignore its result:
+
+```
+useEffect(() => {
+  let ignore = false;
+
+  async function startFetching() {
+    const json = await fetchTodos(userId);
+    if (!ignore) {
+      setTodos(json);
+    }
+  }
+
+  startFetching();
+
+  return () => {
+    ignore = true;
+  };
+}, [userId]);
+```
+
+##### useImperativeHandle
+
+This hooks allows you to customize the functionality exposed from a ref. For example, let's say you want to expose a custom Input component's ref, but only to allow parent components to focus the input, and nothing else. This will do it:
+
+```
+const MyInput = forwardRef((props, ref) => {
+  const realInputRef = useRef(null);
+  useImperativeHandle(ref, () => ({
+    // Only expose focus and nothing else
+    focus() {
+      realInputRef.current.focus();
+    },
+  }));
+  return <input {...props} ref={realInputRef} />;
+});
+```
 
 ### Common interview questions
 

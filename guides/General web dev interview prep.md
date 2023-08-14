@@ -2,6 +2,16 @@
 
 ### Basic concepts
 
+#### What is a web server?
+
+This could be hardware, software, or the two together. When referring to hardware, a web server is a computer that stores software and website components. This hardware connects to the Internet and supports data interchange with other conencted devices. When referring to hardware, a web server is a program controller how users access hosted files. At a minimum, the server responds to HTTP requests and understands URLs, delivering content to client devices based on the requests.
+
+#### What is the difference between a static web server and a dynamic web server?
+
+A static web server sends its hosted files as-is to the browser.
+
+A dynamic web server consists of a static web server plus extra software, usually an application server and a database. It is dynamic because the hosted files are updated prior to their sending to the brwoser.
+
 #### When is Server Side Rendering (SSR) better? When is Client-Side Rendering (CSR) better? What is the difference between the two?
 
 CSR renders a website's JavaScript in the browser. The server sends only bare-bones HTML contain the JS files. This can mean that initial load is slow, but subsequent performace can be very fast.

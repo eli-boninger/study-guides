@@ -364,3 +364,16 @@ Express ships with a default error handler which adds the following to the respo
 - the `statusMessage` is set according to the code
 - the body will be either the HTML of the `statusMessage` (in prod) or `err.stack` in other envs.
 - headers specified in `err.headers` will be added.
+
+#### Writing your own error handlers
+
+Error-handling functions are very similar to middleware but they take four arguments instead of three: (`err`, `req`, `res`, `next`).
+
+```
+app.use((err, req, res, next) => {
+  console.error(err.stack)
+  res.status(500).send('Something broke!')
+})
+```
+
+Any number of error handlers is allowed in the request-response pipeline. If not calling `next(err)` in an error handler, it is the handler's responsibilty to write and end the response.

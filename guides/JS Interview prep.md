@@ -428,3 +428,55 @@ localStorage.removeItem('key')
 // Same for sessionStorage
 
 ```
+
+#### The event loop
+
+Function calls from a stack of "frames". Consider the following:
+
+```
+function foo(b) {
+  const a = 10;
+  return a + b + 11;
+}
+
+function bar(x) {
+  const y = 3;
+  return foo(x * y);
+}
+
+const baz = bar(7); // assigns 42 to baz
+```
+
+Here's what happens on the stack:
+
+1. When calling `bar` a frame is generated on the stack with references to `bar`'s args and local vars
+2. When bar calls `foo`, a similar frame for `foo` is pushed onto the stack.
+3. When `foo` returns, that frame is popped off of the stack.
+4. When `bar` returns, the stack is empty.
+
+Args and local vars can continue to exist outside of the stack as long as they are stored outside of the stack somewhere.
+
+JS object memory is allocated in a largely unstructured heap.
+
+A JS runtime uses a message queue - a list of messages to be processed.
+Each message has an associated function that gets called to handle the message.
+
+At some point during the event loop, the runtime begins to handle these messages, starting with the oldest one in the queue. When this happens, the message's function is called with the message as the input param, at which point the function call is pushed onto the stack.
+The function processing will continue until the stack is empty, at which the event loop will proceed with the next message in the queue.
+
+In theory, the event loop works something like this:
+
+```
+while (queue.waitForMessage()) {
+  queue.processNextMessage();
+}
+```
+
+Some characters of JS due to this implementation are as follows:
+
+- When a function runs, it will run entirely before any other code runs
+- The above behavior can cause hanging while we wait for a function to complete
+
+Web browsers add a message to the queue anytime an event occurs which has a listener. The `setTimeout` function adds a message to the queue after a minimum delay of a specified number of milliseconds. If there are other messages on the queue at that point in time, it is quite possible that the number of milliseconds could be exceeded while those messages are run to completion.
+
+As such, even calling `setTimeout` with a zero delay will not necessary immediately execute the callback.

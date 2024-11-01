@@ -6,8 +6,9 @@ The words and language in these guides are largely ripped directly from existing
 
 ### Guides
 
-- [JavaScript](guides/JS%20Interview%20prep.md)
-- [React](guides/React%20interview%20prep.md)
-- [General web development concepts](guides/General%20web%20dev%20interview%prep.md)
-- [Redux](guides/Redux%20interview%20prep.md)
-- [Node+Express](guides/Node%20and%20Express%20interview%20prep.md)
+- [JavaScript](guides/javascript.md)
+- [React](guides/react.md)
+- [General web development concepts](guides/general-web-dev.md)
+- [Redux](guides/redux.md)
+- [Node+Express](guides/node-and-express.md)
+- [Dynamic Programming](guides/dynamic-programming.md)

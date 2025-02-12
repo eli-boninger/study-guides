@@ -1,4 +1,4 @@
-## JS Interview prep
+## Javascript
 
 Contents.
 

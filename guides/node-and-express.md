@@ -1,4 +1,4 @@
-# Node & Express interview prep
+# Node & Express
 
 ## Node
 

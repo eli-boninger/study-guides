@@ -1,4 +1,4 @@
-## General web dev interview prep
+## General web dev
 
 ### Basic concepts
 
